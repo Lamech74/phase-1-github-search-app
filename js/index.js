@@ -1,60 +1,89 @@
-//document.addEventListener("DOMContentLoaded", function () => {
-  //  const inputForm = document.querySelector("form")
-    //inputForm.addEventListener("submit", )
-//})
-
 document.addEventListener('DOMContentLoaded', () => {
-    const inputForm = document.querySelector("form");
-    const userList = document.querySelector('#user-list');
-    const reposList = document.querySelector('#repos-list');
+  const search = document.querySelector('#github-form')
   
-    inputForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const inputValue = document.querySelector('input#search').value;
+  // createToggleBtn()
+  search.addEventListener('submit', (e) => {
+    e.preventDefault()
+    clearPreviousResults()
+    const searchName = e.target.search.value
+    getAllUsers(searchName)
+  })
+})
+
+function clearPreviousResults() {
+  const resultList = document.querySelector('#user-list')
+  resultList.innerText = ''
+}
+
+function renderPerson(person) {
+  const card = document.createElement('li')
+  const name = person.login
+  const personName = name[0].toUpperCase() + name.slice(1)
+
+  card.className = 'card'
+  card.style.textAlign = 'center'
+  card.innerHTML = `
+  <div>
+    <h2>${personName}</h2>
+    <img class='image' src=${person.avatar_url}/>
+    <p>
+      ${personName}'s profile link <a href='${person.html_url}'>${person.html_url}</a>
+    </p>
+    <button class='repos-btn'>Repos</button>
+  </div>`
+  card.querySelector('button').addEventListener('click', () => {
+    fetch(`https://api.github.com/users/${name}/repos`)
+    .then(res => res.json())
+    .then(repos => {
+      clearPreviousRepos()
+      addTitle(personName)
+      repos.forEach((repo, index) => renderRepos(repo, index))
+    })
+  })
+  document.querySelector('#user-list').appendChild(card)
+}
+
+function getAllUsers(name) {
+  fetch(`https://api.github.com/search/users?q=${name}`)
+    .then(res => res.json())
+    .then(data => {
+      data.items.forEach(person => renderPerson(person))
+    })
+}
+
+function renderRepos(repo, index) {
+  const li = document.createElement('li') 
+  li.className = 'repo'
+  li.textContent = index + '. ' + repo.name
+  document.querySelector('#repos-list').appendChild(li)
+}
+
+function clearPreviousRepos() {
+  const repos = document.querySelector('#repos-list')
+  repos.innerText = ''
+}
+
+function addTitle(name) {
+  const h2 = document.createElement('h2')
+  h2.textContent = `${name}'s Repos`
+  document.querySelector('#repos-list').appendChild(h2)
+}
+
+// function createToggleBtn() {
+//   const toggleBtn = document.createElement('button') 
+//   toggleBtn.id = 'toggle-button' 
+//   toggleBtn.innerText = 'user/repos'
   
-      fetch(`https://api.github.com/search/users?q=${inputValue}`)
-        .then(resp => resp.json())
-        .then(data => displayUsernames(data.items))
-        .catch(error => console.error('Error:', error));
-    });
-  
-    function displayUsernames(users) {
-      userList.innerHTML = '';
-      reposList.innerHTML = '';
-  
-      users.forEach(user => {
-        const listItem = document.createElement('li');
-        const userLink = document.createElement('a');
-        userLink.textContent = user.login;
-        userLink.href = user.html_url;
-        userLink.target = '_blank'; // Open link in a new tab
-  
-        // Add a click event listener to each user link
-        userLink.addEventListener('click', (event) => {
-          event.preventDefault();
-          fetch(`https://api.github.com/users/${user.login}/repos`)
-            .then(resp => resp.json())
-            .then(repos => displayRepos(repos))
-            .catch(error => console.error('Error:', error));
-        });
-  
-        listItem.appendChild(userLink);
-        userList.appendChild(listItem);
-      });
-    }
-  
-    function displayRepos(repos) {
-      reposList.innerHTML = '';
-  
-      repos.forEach(repo => {
-        const listItem = document.createElement('li');
-        const repoLink = document.createElement('a');
-        repoLink.textContent = repo.name;
-        repoLink.href = repo.html_url;
-        repoLink.target = '_blank'; // Open link in a new tab
-        listItem.appendChild(repoLink);
-        reposList.appendChild(listItem);
-      });
-    }
-  });
-  
+//   let currentInputStatus = 'userSearch'
+
+//   toggleBtn.addEventListener('click', () => {
+//     if(currentInputStatus === 'userSearch') {
+//       currentInputStatus = 'repoSearch'      
+//     } else {
+//       currentInputStatus = 'userSearch'
+//     }
+//     console.log(currentInputStatus);
+//   })
+//   const search = document.querySelector('#github-form')
+//   search.appendChild(toggleBtn)
+// }
